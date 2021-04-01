@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_reader/page_search.dart';
 
-class Bookshelf extends StatelessWidget {
+class PageBookshelf extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text("书架"),
-          actions:  [
+          actions: [
             IconButton(
               icon: Icon(Icons.search),
               tooltip: 'search',
               onPressed: () {
-                // handle the press
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Awesome Snackbar!"),
-                  ),
-                );
-
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context)=>PageSearch(),
+                ));
               },
             ),
           ],
