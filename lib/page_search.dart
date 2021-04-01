@@ -17,6 +17,8 @@ class PageSearchState extends State<PageSearch> {
   void initState() {
     super.initState();
     _focusNode.addListener(handleFocusChange);
+    final Future<List<String>> searchHistoryList =
+        _prefs.then((value) => value.getStringList("search_history_list"));
   }
 
   @override
@@ -27,11 +29,10 @@ class PageSearchState extends State<PageSearch> {
     _focusNode.dispose();
   }
 
-  void handleFocusChange(){
+  void handleFocusChange() {
     setState(() {
       print("focus hasFocus:${_focusNode.hasFocus}");
     });
-
   }
 
   @override
@@ -72,10 +73,19 @@ class PageSearchState extends State<PageSearch> {
 
   Widget buildSearchHint(BuildContext context) {
     return FutureBuilder<List<String>>(
-        future:_prefs.then((sp) => sp.getStringList("search_history")),
-        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot){
-
-    });
+        future: _prefs.then((sp) => sp.getStringList("search_history_list")),
+        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+          print(snapshot.data);
+          if (snapshot.hasData) {
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: snapshot.data.map((e) => Text(e)).toList(),
+            );
+          } else {
+            return Wrap(children: []);
+          }
+        });
   }
 
   Widget buildSearchResult(BuildContext context) {
@@ -83,9 +93,16 @@ class PageSearchState extends State<PageSearch> {
   }
 
   void search(BuildContext context, String str) {
-    if(str.isEmpty){
+    if (str.isEmpty) {
       _focusNode.requestFocus();
+      return;
     }
+    _prefs.then((sp) {
+      var list = sp.getStringList("search_history_list") ?? [];
+      list.add(str);
+      sp.setStringList("search_history_list", list);
+    });
+
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text("搜索……$str")));
   }
