@@ -1,3 +1,7 @@
+import 'package:flutter_reader/bean/search_result.dart';
+
 abstract class Parser {
-  void search(String key);
+  late String domain;
+
+  Stream<List<SearchResult>> search(String key);
 }

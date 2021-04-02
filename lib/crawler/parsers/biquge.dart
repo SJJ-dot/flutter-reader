@@ -1,33 +1,55 @@
-import 'dart:io';
+import 'dart:async';
 
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/parser.dart';
+import 'package:flutter_reader/utils/dio_utils.dart';
 import 'package:flutter_reader/utils/logs.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:html/parser.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:rxdart/streams.dart';
 
 class ParserBiQuGe extends Parser {
-  Future<CookieManager> _cookieManager;
-
-  ParserBiQuGe() {
-    Future<Directory> appDocDir = getApplicationDocumentsDirectory();
-    _cookieManager = appDocDir.then((value) {
-      String appDocPath = value.path;
-      var pcj = PersistCookieJar(
-          ignoreExpires: true, storage: FileStorage(appDocPath + "/.cookies/"));
-      return CookieManager(pcj);
-    });
-  }
+  @override
+  String get domain => "www.biquge.se";
 
   @override
-  void search(String key) async {
-    var dio = Dio();
-    dio.interceptors.add(await _cookieManager);
-    await dio.get("http://www.biquge.se");
-    Response res = await dio.post("http://www.biquge.se/case.php",
-        data: {"key": key}, queryParameters: {"m": "search"});
+  Stream<List<SearchResult>> search(String key) {
+    StreamController<List<SearchResult>> controller = StreamController();
+    CancelToken cancelToken = CancelToken();
 
-    log(res.data);
+    controller.onCancel = () {
+      cancelToken.cancel();
+    };
+
+    DioUtils.dio.then((dio) {
+      return dio
+          .get("http://www.biquge.se", cancelToken: cancelToken)
+          .then((value) => dio);
+    }).then((dio) {
+      return dio.post("http://www.biquge.se/case.php",
+          data: FormData.fromMap({"key": key}),
+          queryParameters: {"m": "search"},
+          cancelToken: cancelToken);
+    }).then((res) {
+      var html = parse(res.data, sourceUrl: res.realUri.toString());
+      var bookListEl = html.querySelectorAll("#newscontent > div.l > ul > li");
+      var results = <SearchResult>[];
+      try {
+        for (var bookEl in bookListEl) {
+          var title = bookEl.querySelector(".s2 > a")!.text;
+          var url = bookEl.querySelector(".s2 > a")!.attributes["href"]!;
+          var author = bookEl.querySelector(".s4")!.text;
+          var r = SearchResult(
+              this.domain, title, author, res.realUri.resolve(url).toString());
+          results.add(r);
+        }
+      } catch (e) {
+        log(e);
+      }
+      controller.add(results);
+      controller.close();
+    });
+    return controller.stream;
   }
 }

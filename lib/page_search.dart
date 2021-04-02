@@ -1,6 +1,8 @@
-import 'dart:ffi';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_reader/bean/search_result.dart';
+import 'package:flutter_reader/utils/logs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'crawler/crawler.dart';
@@ -8,27 +10,36 @@ import 'crawler/crawler.dart';
 class PageSearch extends StatefulWidget {
   @override
   State createState() {
-    return _PageSearchState();
+    return _PageState();
   }
 }
 
-class _PageSearchState extends State<PageSearch> {
-  TextEditingController _searchCtr;
-  FocusNode _focusNode;
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+class _PageState extends State<PageSearch> {
+  List<List<SearchResult>>? _searchResult;
+  late TextEditingController _searchCtr;
+  late FocusNode _focusNode;
 
   @override
   void initState() {
     _searchCtr = TextEditingController();
     _focusNode = FocusNode();
+
+    _focusNode.addListener(handleFocusChange);
     super.initState();
   }
 
   @override
   void dispose() {
     _searchCtr.dispose();
+    _focusNode.removeListener(handleFocusChange);
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void handleFocusChange() {
+    setState(() {
+      _searchResult = null;
+    });
   }
 
   @override
@@ -45,7 +56,7 @@ class _PageSearchState extends State<PageSearch> {
           style: TextStyle(color: Colors.white),
           cursorColor: Colors.white,
           textInputAction: TextInputAction.search,
-          onSubmitted: (text) => _search(context, _searchCtr.text),
+          onSubmitted: (text) => _search(_searchCtr.text),
           controller: _searchCtr,
           focusNode: _focusNode,
           autofocus: true,
@@ -55,16 +66,18 @@ class _PageSearchState extends State<PageSearch> {
             icon: Icon(Icons.search),
             tooltip: '搜索',
             onPressed: () {
-              _search(context, _searchCtr.text);
+              _search(_searchCtr.text);
             },
           ),
         ],
       ),
-      body: _PageSearchBodyWidget(this),
+      body: _PageData(state: this, child: _BodyWidget()),
     );
   }
 
-  void _search(BuildContext context, String str) {
+  StreamSubscription? _lastRequest;
+
+  void _search(String str) {
     if (str.isEmpty) {
       _focusNode.requestFocus();
       return;
@@ -72,67 +85,100 @@ class _PageSearchState extends State<PageSearch> {
     _focusNode.unfocus();
 
     // FocusScope.of(context).requestFocus(FocusNode());
-    _prefs.then((sp) {
+    SharedPreferences.getInstance().then((sp) {
       var list = sp.getStringList("search_history_list") ?? [];
       list.remove(str);
-      list.add(str);
+      list.insert(0, str);
       sp.setStringList("search_history_list", list);
     });
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("搜索……$str")));
-    print("搜索……$str");
-    crawler.search(str);
+    log("搜索……$str");
+    _lastRequest?.cancel();
+    Map<String, List<SearchResult>> result = {};
+    _lastRequest = Crawler.getInstance().search(str).listen((event) {
+      if (event.isNotEmpty) {
+        for (var book in event) {
+          var key = "title:${book.title}author:${book.author}";
+          var list = result[key];
+          if (list == null) {
+            list = [];
+            result[key] = list;
+          }
+          list.add(book);
+        }
+        var r = result.values.toList();
+        r.sort((l1, l2) {
+          var c = l1.length.compareTo(l2.length);
+          if (c == 0) {
+            return "title:${l1.first.title}author:${l1.first.author}"
+                .compareTo("title:${l2.first.title}author:${l2.first.author}");
+          } else {
+            return c;
+          }
+        });
+        setState(() {
+          _searchResult = r;
+        });
+      }
+    });
   }
 }
 
-class _PageSearchBodyWidget extends StatefulWidget {
-  _PageSearchBodyWidget(this._pageSearchState);
+class _PageData extends InheritedWidget {
+  _PageData({required this.state, required Widget child})
+      : this.searchResult = state._searchResult,
+        this.focus = state._focusNode.hasFocus,
+        super(child: child);
 
-  final _PageSearchState _pageSearchState;
+  List<List<SearchResult>>? searchResult;
+  bool focus;
+  _PageState state;
+
+  void search(String str) {
+    state._searchCtr.text = str;
+    state._search(str);
+  }
+
+  @override
+  bool updateShouldNotify(_PageData oldWidget) {
+    return oldWidget.searchResult != searchResult || oldWidget.focus != focus;
+  }
+
+  static _PageData of(BuildContext context) {
+    final _PageData? result = context.dependOnInheritedWidgetOfExactType();
+    return result!;
+  }
+}
+
+//body widget
+class _BodyWidget extends StatefulWidget {
+  _BodyWidget();
 
   @override
   State createState() {
-    return _PageSearchBodyState(_pageSearchState);
+    return _BodyState();
   }
 }
 
-class _PageSearchBodyState extends State<_PageSearchBodyWidget> {
-  _PageSearchBodyState(this._pageSearchState);
-
-  final _PageSearchState _pageSearchState;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageSearchState._focusNode.addListener(handleFocusChange);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _pageSearchState._focusNode.removeListener(handleFocusChange);
-  }
+//body state
+class _BodyState extends State<_BodyWidget> {
+  _PageState get _pageSearchState =>
+      context.findAncestorStateOfType<_PageState>()!;
 
   @override
   Widget build(BuildContext context) {
-    return _pageSearchState._focusNode.hasFocus
+    return _PageData.of(context).focus
         ? buildSearchHint(context)
         : buildSearchResult(context);
   }
 
-  void handleFocusChange() {
-    setState(() {});
-  }
-
   Widget buildSearchHint(BuildContext context) {
-    return FutureBuilder<List<String>>(
-        future: _pageSearchState._prefs
+    return FutureBuilder<List<String>?>(
+        future: SharedPreferences.getInstance()
             .then((sp) => sp.getStringList("search_history_list")),
-        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<List<String>?> snapshot) {
           if (snapshot.hasData) {
             var childrens = <Widget>[];
-            for (var str in snapshot.data) {
+            for (var str in snapshot.data!) {
               var item = Container(
                 padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
                 margin: EdgeInsets.all(5),
@@ -152,7 +198,7 @@ class _PageSearchBodyState extends State<_PageSearchBodyWidget> {
               childrens.add(GestureDetector(
                 child: item,
                 onLongPress: () {
-                  _pageSearchState._prefs.then((sp) {
+                  SharedPreferences.getInstance().then((sp) {
                     var list = sp.getStringList("search_history_list") ?? [];
                     list.remove(str);
                     sp.setStringList("search_history_list", list);
@@ -161,7 +207,7 @@ class _PageSearchBodyState extends State<_PageSearchBodyWidget> {
                 },
                 onTap: () {
                   _pageSearchState._searchCtr.text = str;
-                  _pageSearchState._search(context, str);
+                  _pageSearchState._search(str);
                 },
               ));
             }
@@ -174,6 +220,19 @@ class _PageSearchBodyState extends State<_PageSearchBodyWidget> {
   }
 
   Widget buildSearchResult(BuildContext context) {
-    return Text("buildSearchResult");
+    var list = _PageData.of(context).searchResult ?? [];
+    ListView listView = ListView.builder(
+        itemBuilder: (ctx, index) {
+          var sr = list[index];
+          return Card(
+              child: ListTile(
+            title: Text(sr.first.title),
+            subtitle: Text(sr.first.author),
+            trailing: Text(sr.length.toString()),
+          ));
+        },
+        itemCount: list.length);
+
+    return listView;
   }
 }
