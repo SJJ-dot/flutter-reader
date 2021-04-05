@@ -11,8 +11,9 @@ import 'package:rxdart/streams.dart';
 
 class ParserBiQuGe extends Parser {
   @override
-  String get domain => "www.biquge.se";
-
+  String get sourceDomain => "www.biquge.se";
+  @override
+  String get sourceName => "笔趣阁se";
   @override
   Stream<List<SearchResult>> search(String key) {
     StreamController<List<SearchResult>> controller = StreamController();
@@ -41,7 +42,7 @@ class ParserBiQuGe extends Parser {
           var url = bookEl.querySelector(".s2 > a")!.attributes["href"]!;
           var author = bookEl.querySelector(".s4")!.text;
           var r = SearchResult(
-              this.domain, title, author, res.realUri.resolve(url).toString());
+              this.sourceDomain,this.sourceName, title, author, res.realUri.resolve(url).toString());
           results.add(r);
         }
       } catch (e) {

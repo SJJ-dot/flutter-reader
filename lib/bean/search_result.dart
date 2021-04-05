@@ -1,13 +1,14 @@
 class SearchResult {
-  SearchResult(this.domain, this.title, this.author, this.url);
+  SearchResult(this.sourceDomain,this.sourceName, this.title, this.author, this.url);
 
-  String domain;
+  String sourceDomain;
+  String sourceName;
   String title;
   String author;
   String url;
 
   @override
   String toString() {
-    return 'SearchResult{domain: $domain, title: $title, author: $author, url: $url}';
+    return 'SearchResult{sourceDomain: $sourceDomain, title: $title, author: $author, url: $url}';
   }
 }

@@ -129,9 +129,9 @@ class _PageData extends InheritedWidget {
         this.focus = state._focusNode.hasFocus,
         super(child: child);
 
-  List<List<SearchResult>>? searchResult;
-  bool focus;
-  _PageState state;
+  final List<List<SearchResult>>? searchResult;
+  final bool focus;
+  final _PageState state;
 
   void search(String str) {
     state._searchCtr.text = str;
@@ -206,8 +206,7 @@ class _BodyState extends State<_BodyWidget> {
                   });
                 },
                 onTap: () {
-                  _pageSearchState._searchCtr.text = str;
-                  _pageSearchState._search(str);
+                  _PageData.of(context).search(str);
                 },
               ));
             }
@@ -225,11 +224,12 @@ class _BodyState extends State<_BodyWidget> {
         itemBuilder: (ctx, index) {
           var sr = list[index];
           return Card(
-              child: ListTile(
-            title: Text(sr.first.title),
-            subtitle: Text(sr.first.author),
-            trailing: Text(sr.length.toString()),
-          ));
+            child: ListTile(
+              title: Text(sr.first.title),
+              subtitle: Text(sr.first.author),
+              trailing: Text(sr.length.toString()),
+            ),
+          );
         },
         itemCount: list.length);
 
