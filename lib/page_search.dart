@@ -216,7 +216,7 @@ class _BodyState extends State<_BodyWidget> {
               DbBook.saveSearchResult(sr).then((readingId) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => PageBookDetails()),
+                  MaterialPageRoute(builder: (context) => PageBookDetails(readingId)),
                 ).then((value) => Navigator.pop(context));
               });
             },
