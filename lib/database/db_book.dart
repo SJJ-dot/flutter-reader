@@ -1,4 +1,3 @@
-
 import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/crawler.dart';
@@ -101,5 +100,23 @@ class DbBook {
       ));
     }
     return res;
+  }
+
+  static Future<Book> getBookDetails(int id) async {
+    var db = await DB.db;
+    var mapList = await db.rawQuery("select * from Book where id = ?", [id]);
+    var map = mapList.first;
+    return Book(
+      id: map["id"] as int,
+      sourceDomain: map["sourceDomain"] as String,
+      sourceName: map["sourceName"] as String,
+      title: map["title"] as String,
+      author: map["author"] as String,
+      url: map["url"] as String,
+      intro: map["intro"] as String?,
+      reading: map["reading"] as int == 1,
+      readingChapter: map["readingChapter"] as int,
+      readingPos: map["readingPos"] as int,
+    );
   }
 }
