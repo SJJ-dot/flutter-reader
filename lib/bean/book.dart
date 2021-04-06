@@ -6,6 +6,7 @@ class Book {
       this.title,
       this.author,
       this.url,
+      this.intro,
       this.reading = false,
       this.readingChapter = -1,
       this.readingPos = -1});

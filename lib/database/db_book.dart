@@ -1,7 +1,8 @@
+
+import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/crawler.dart';
 import 'package:flutter_reader/database/db.dart';
-import 'package:flutter_reader/utils/logs.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DbBook {
@@ -79,5 +80,26 @@ class DbBook {
         where: 'title = ? and author = ? and reading = ?',
         whereArgs: [sr.title, sr.author, 1]);
     return bks.first["id"] as int;
+  }
+
+  static Future<List<Book>> getAllReadingBook() async {
+    var db = await DB.db;
+    var bks = await db.rawQuery("select * from Book where reading = ?", [1]);
+    var res = <Book>[];
+    for (var e in bks) {
+      res.add(Book(
+        id: e["id"] as int,
+        sourceDomain: e["sourceDomain"] as String,
+        sourceName: e["sourceName"] as String,
+        title: e["title"] as String,
+        author: e["author"] as String,
+        url: e["url"] as String,
+        intro: e["intro"] as String?,
+        reading: e["reading"] as int == 1,
+        readingChapter: e["readingChapter"] as int,
+        readingPos: e["readingPos"] as int,
+      ));
+    }
+    return res;
   }
 }
