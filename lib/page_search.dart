@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_reader/bean/search_result.dart';
+import 'package:flutter_reader/database/db_book.dart';
+import 'package:flutter_reader/page_book_details.dart';
 import 'package:flutter_reader/utils/logs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -202,12 +204,22 @@ class _BodyState extends State<_BodyWidget> {
     ListView listView = ListView.builder(
         itemBuilder: (ctx, index) {
           var sr = list[index];
-          return Card(
-            child: ListTile(
-              title: Text(sr.first.title),
-              subtitle: Text(sr.first.author),
-              trailing: Text(sr.length.toString()),
+          return GestureDetector(
+            child: Card(
+              child: ListTile(
+                title: Text(sr.first.title),
+                subtitle: Text(sr.first.author),
+                trailing: Text(sr.length.toString()),
+              ),
             ),
+            onTap: () {
+              DbBook.saveSearchResult(sr).then((readingId) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PageBookDetails()),
+                ).then((value) => Navigator.pop(context));
+              });
+            },
           );
         },
         itemCount: list.length);

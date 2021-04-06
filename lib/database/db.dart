@@ -12,8 +12,8 @@ class DB {
       // constructed for each platform.
       join(await getDatabasesPath(), 'book_database.db'),
       version: 1,
-      onCreate: (db, version) {
-        DbBook.createTable(db, version);
+      onCreate: (db, version) async {
+       await DbBook.createTable(db, version);
       },
     );
   });

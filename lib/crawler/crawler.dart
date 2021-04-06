@@ -47,4 +47,6 @@ class Crawler {
 
   /// 工厂构造方法，这里使用命名构造函数方式进行声明
   factory Crawler.getInstance() => _instance;
+
+  static const qidian = "qidian";
 }
