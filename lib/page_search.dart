@@ -93,32 +93,11 @@ class _PageState extends State<PageSearch> {
     });
     log("搜索……$str");
     _lastRequest?.cancel();
-    Map<String, List<SearchResult>> result = {};
+
     _lastRequest = Crawler.getInstance().search(str).listen((event) {
-      if (event.isNotEmpty) {
-        for (var book in event) {
-          var key = "title:${book.title}author:${book.author}";
-          var list = result[key];
-          if (list == null) {
-            list = [];
-            result[key] = list;
-          }
-          list.add(book);
-        }
-        var r = result.values.toList();
-        r.sort((l1, l2) {
-          var c = l1.length.compareTo(l2.length);
-          if (c == 0) {
-            return "title:${l1.first.title}author:${l1.first.author}"
-                .compareTo("title:${l2.first.title}author:${l2.first.author}");
-          } else {
-            return c;
-          }
-        });
-        setState(() {
-          _searchResult = r;
-        });
-      }
+      setState(() {
+        _searchResult = event;
+      });
     });
   }
 }
