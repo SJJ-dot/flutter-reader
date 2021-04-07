@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/database/db_book.dart';
 import 'package:flutter_reader/page_reading.dart';
+import 'package:flutter_reader/utils/logs.dart';
 
 class PageBookDetails extends StatelessWidget {
   PageBookDetails(this.bookId);
@@ -17,46 +18,98 @@ class PageBookDetails extends StatelessWidget {
           Book book = snapshot.data as Book;
           return Scaffold(
             appBar: AppBar(
-              title: Text("书籍详情"),
+              title: Text("${book.title}"),
             ),
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            body: Stack(
+              fit: StackFit.expand,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.all(16),
-                      color: Colors.amberAccent,
-                      width: 140,
-                      height: 180,
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                Positioned(
+                  left: 20,
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  child: RefreshIndicator(
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics()
+                      ),
                       children: [
-                        Text(book.title!),
-                        Text("作者：${book.author}"),
-                        Text("最新章节"),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              color: Colors.amberAccent,
+                              width: 140,
+                              height: 180,
+                            ),
+                            Container(
+                              margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                    child: Text(
+                                      "${book.title}",
+                                      style: TextStyle(fontSize: 24),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
+                                    child: Text(
+                                      "${book.author}",
+                                      style: TextStyle(
+                                          fontSize: 18, color: Colors.black54),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                    child: Text(
+                                      "${book.sourceName}",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.redAccent),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                                    child: Text(
+                                      "最新章节",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.redAccent),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                        Container(
+                          margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
+                          child: Text("简介：${book.intro ?? ""}"),
+                        ),
                       ],
-                    )
-                  ],
+                    ),
+                    onRefresh: onRefresh,
+                  ),
                 ),
-                Text(book.sourceName!),
-                Expanded(
-                  child: Text("简介：${book.intro}"),
-                ),
-                Container(
-                  width: double.infinity,
+                Positioned(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
                   height: 50,
-                  margin: EdgeInsets.all(10),
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (c) => PageReading()));
                     },
-                    child: Text("开始阅读"),
+                    child: Text(
+                      "开始阅读",
+                      style: TextStyle(fontSize: 20),
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           );
@@ -71,5 +124,9 @@ class PageBookDetails extends StatelessWidget {
         }
       },
     );
+  }
+
+  Future<void> onRefresh() async {
+    log("下拉刷新");
   }
 }
