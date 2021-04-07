@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/parser.dart';
 import 'package:flutter_reader/utils/dio_utils.dart';
@@ -46,14 +47,36 @@ class ParserBiQuGe extends Parser {
     });
     return controller.stream;
   }
+
+  @override
+  Stream<Book> getBookDetail(Book book) {
+    StreamController<Book> controller = StreamController();
+    CancelToken cancelToken = CancelToken();
+
+    controller.onCancel = () {
+      cancelToken.cancel();
+    };
+    DioUtils.dio.then((dio) {
+      return dio.get(book.url!, cancelToken: cancelToken);
+    }).then((res) {
+      log(res);
+      controller.add(book);
+      controller.close();
+    });
+
+
+    return controller.stream;
+  }
+
+
 }
 
-List<SearchResult> parseSearchResult(Map<String,dynamic> map) {
+List<SearchResult> parseSearchResult(Map<String, dynamic> map) {
   var data = map["data"];
   var uri = map["realUri"];
   var sourceDomain = map["sourceDomain"];
   var sourceName = map["sourceName"];
-  var html = parse(data, sourceUrl:uri.toString());
+  var html = parse(data, sourceUrl: uri.toString());
   var bookListEl = html.querySelectorAll("#newscontent > div.l > ul > li");
   var results = <SearchResult>[];
   try {
@@ -61,8 +84,8 @@ List<SearchResult> parseSearchResult(Map<String,dynamic> map) {
       var title = bookEl.querySelector(".s2 > a")!.text;
       var url = bookEl.querySelector(".s2 > a")!.attributes["href"]!;
       var author = bookEl.querySelector(".s4")!.text;
-      var r = SearchResult(sourceDomain,sourceName, title,
-          author,uri.resolve(url).toString());
+      var r = SearchResult(sourceDomain, sourceName, title,
+          author, uri.resolve(url).toString());
       results.add(r);
     }
   } catch (e) {

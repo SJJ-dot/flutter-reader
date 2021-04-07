@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/parser.dart';
 import 'package:flutter_reader/crawler/parsers/biquge.dart';
@@ -7,11 +8,13 @@ import 'package:flutter_reader/utils/logs.dart';
 import 'package:rxdart/rxdart.dart';
 
 class Crawler {
-  final parsers = <Parser>[new ParserBiQuGe()];
+  final _parsers = <Parser>[new ParserBiQuGe()];
+  final Map<String, Parser> _parsersMap = {};
 
   Stream<List<List<SearchResult>>> search(String key) {
     Map<String, List<SearchResult>> result = {};
-    return Rx.merge(parsers.map((e) => e.search(key)))
+
+    return Rx.merge(_parsers.map((e) => e.search(key)))
         .skipWhile((element) => element.isEmpty)
         .map((List<SearchResult> list) {
       for (var book in list) {
@@ -37,8 +40,17 @@ class Crawler {
     });
   }
 
+  Stream<Book> getBookDetail(Book book) {
+    return _parsersMap[book.sourceDomain]?.getBookDetail(book) ??
+        Stream.error("未找到书源");
+  }
+
   /// 内部构造方法，可避免外部暴露构造函数，进行实例化
-  Crawler._internal();
+  Crawler._internal() {
+    for (var value in _parsers) {
+      _parsersMap[value.sourceDomain] = value;
+    }
+  }
 
   /// 单例对象
   static final Crawler _instance = Crawler._internal();
