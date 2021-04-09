@@ -1,3 +1,5 @@
+import 'package:flutter_reader/bean/chapter.dart';
+
 class Book {
   Book(
       {this.id = 0,
@@ -19,6 +21,7 @@ class Book {
 
   String? url;
   String? intro;
+  String? cover;
 
   ///是否正在阅读本书
   bool reading;
@@ -28,4 +31,13 @@ class Book {
 
   ///正在阅读的文字索引从-1开始
   int readingPos;
+
+
+  ///
+  List<Chapter>? chapterList;
+
+  @override
+  String toString() {
+    return 'Book{id: $id, sourceDomain: $sourceDomain, sourceName: $sourceName, title: $title, author: $author, url: $url, intro: $intro, cover: $cover, reading: $reading, readingChapter: $readingChapter, readingPos: $readingPos, chapterList: $chapterList}';
+  }
 }

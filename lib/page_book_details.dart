@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_easyrefresh/easy_refresh.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/crawler/crawler.dart';
 import 'package:flutter_reader/database/db_book.dart';
@@ -117,8 +118,9 @@ class _PageState extends State<PageBookDetails> {
                   ),
                   Container(
                     margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
-                    child: Text("简介：${book.intro ?? ""}"),
+                    child: Html(data: "简介：${book.intro ?? ""}"),
                   ),
+
                 ],
               ),
               onRefresh: () => onRefresh(book),
@@ -153,5 +155,8 @@ class _PageState extends State<PageBookDetails> {
         _bk = event;
       });
     });
+
+   //var a =  await _lastRequest;
+
   }
 }

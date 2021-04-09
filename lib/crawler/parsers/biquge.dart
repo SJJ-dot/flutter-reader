@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_reader/bean/book.dart';
+import 'package:flutter_reader/bean/chapter.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/parser.dart';
 import 'package:flutter_reader/utils/dio_utils.dart';
@@ -52,23 +53,56 @@ class ParserBiQuGe extends Parser {
   Stream<Book> getBookDetail(Book book) {
     StreamController<Book> controller = StreamController();
     CancelToken cancelToken = CancelToken();
-
     controller.onCancel = () {
       cancelToken.cancel();
     };
     DioUtils.dio.then((dio) {
       return dio.get(book.url!, cancelToken: cancelToken);
     }).then((res) {
-      log(res);
-      controller.add(book);
+      return compute(parseBookDetails, {
+        "data": res.data,
+        "realUri": res.realUri,
+        "sourceDomain": sourceDomain,
+        "sourceName": sourceName,
+      });
+    }).then((value) {
+      // log("book == value:${value}");
+      controller.add(value);
       controller.close();
     });
 
-
     return controller.stream;
   }
+}
 
-
+Book parseBookDetails(Map<String, dynamic> map) {
+  Book book = Book();
+  var data = map["data"];
+  Uri uri = map["realUri"];
+  String sourceDomain = map["sourceDomain"];
+  String sourceName = map["sourceName"];
+  var html = parse(data, sourceUrl: uri.toString());
+  book.sourceDomain = sourceDomain;
+  book.sourceName = sourceName;
+  book.title = html.querySelector("#info > h1")?.text;
+  book.author = html.querySelector("#info")?.children[1].text.split("者：")[1];
+  book.url = uri.toString();
+  book.intro = html.querySelector("#intro")?.outerHtml;
+  var src = html.querySelector("#fmimg > img")?.attributes["src"];
+  book.cover = uri.resolve(src ?? "").toString();
+  var chapterList = <Chapter>[];
+  var chapterListEl = html.querySelectorAll("#list > dl > *");
+  for (int i = chapterListEl.length - 1; i >= 0; i--) {
+    var chapterEl = chapterListEl[i];
+    if ("dt" == chapterEl.localName) {
+      break;
+    }
+    var chapterA = chapterEl.querySelector("a");
+    var url = uri.resolve(chapterA?.attributes["href"] ?? "").toString();
+    chapterList.insert(0, Chapter(chapterA?.text ?? "empty", url));
+  }
+  book.chapterList = chapterList;
+  return book;
 }
 
 List<SearchResult> parseSearchResult(Map<String, dynamic> map) {
@@ -84,8 +118,8 @@ List<SearchResult> parseSearchResult(Map<String, dynamic> map) {
       var title = bookEl.querySelector(".s2 > a")!.text;
       var url = bookEl.querySelector(".s2 > a")!.attributes["href"]!;
       var author = bookEl.querySelector(".s4")!.text;
-      var r = SearchResult(sourceDomain, sourceName, title,
-          author, uri.resolve(url).toString());
+      var r = SearchResult(
+          sourceDomain, sourceName, title, author, uri.resolve(url).toString());
       results.add(r);
     }
   } catch (e) {
