@@ -2,6 +2,7 @@ import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 import 'package:flutter_reader/crawler/crawler.dart';
 import 'package:flutter_reader/database/db.dart';
+import 'package:flutter_reader/database/db_chapter.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DbBook {
@@ -13,6 +14,8 @@ class DbBook {
 	"title"	TEXT,
 	"author"	TEXT,
 	"url"	TEXT,
+	"intro"	TEXT,
+	"cover"	TEXT,
 	"reading"	INTEGER DEFAULT 0,
 	"readingChapter"	INTEGER DEFAULT -1,
 	"readingPos"	INTEGER DEFAULT -1,
@@ -81,6 +84,24 @@ class DbBook {
     return bks.first["id"] as int;
   }
 
+  static Future<void> saveBookDetails(Book book) async {
+    var db = await DB.db;
+    await db.transaction((txn) async {
+      var bookValues = {
+        "sourceName": book.sourceName,
+        "title": book.title,
+        "author": book.author,
+        "intro": book.intro,
+        "url": book.url,
+        "cover": book.cover,
+      };
+      var batch = txn.batch();
+      batch.update("Book", bookValues, where: "id=?", whereArgs: [book.id]);
+      BdChapter.saveChapterList(book.chapterList ?? List.empty(), batch);
+      await batch.commit(noResult: true);
+    });
+  }
+
   static Future<List<Book>> getAllReadingBook() async {
     var db = await DB.db;
     var bks = await db.rawQuery("select * from Book where reading = ?", [1]);
@@ -114,6 +135,7 @@ class DbBook {
       author: map["author"] as String,
       url: map["url"] as String,
       intro: map["intro"] as String?,
+      cover: map["cover"] as String?,
       reading: map["reading"] as int == 1,
       readingChapter: map["readingChapter"] as int,
       readingPos: map["readingPos"] as int,

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_reader/bean/book.dart';
 import 'package:flutter_reader/bean/search_result.dart';
 
@@ -5,7 +6,7 @@ abstract class Parser {
   late String sourceDomain;
   late String sourceName;
 
-  Stream<List<SearchResult>> search(String key);
+  Future<List<SearchResult>> search(String key,CancelToken cancelToken);
 
-  Stream<Book> getBookDetail(Book book);
+  Future<Book> getBookDetail(Book book,CancelToken cancelToken);
 }

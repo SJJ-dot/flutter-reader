@@ -2,13 +2,14 @@ import 'package:flutter_reader/bean/chapter.dart';
 
 class Book {
   Book(
-      {this.id = 0,
+      {this.id = -1,
       this.sourceDomain,
       this.sourceName,
       this.title,
       this.author,
       this.url,
       this.intro,
+      this.cover,
       this.reading = false,
       this.readingChapter = -1,
       this.readingPos = -1});

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_reader/database/db_book.dart';
+import 'package:flutter_reader/database/db_chapter.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -14,6 +15,7 @@ class DB {
       version: 1,
       onCreate: (db, version) async {
        await DbBook.createTable(db, version);
+       await BdChapter.createTable(db, version);
       },
     );
   });

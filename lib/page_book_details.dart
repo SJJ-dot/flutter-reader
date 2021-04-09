@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyrefresh/easy_refresh.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -28,7 +29,7 @@ class _PageState extends State<PageBookDetails> {
 
   @override
   Widget build(BuildContext context) {
-    if(_bk!=null) {
+    if (_bk != null) {
       return buildPage(context, _bk!);
     }
     return FutureBuilder(
@@ -71,9 +72,9 @@ class _PageState extends State<PageBookDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        color: Colors.amberAccent,
                         width: 140,
                         height: 180,
+                        child: Image.network(book.cover??""),
                       ),
                       Container(
                         margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
@@ -120,7 +121,6 @@ class _PageState extends State<PageBookDetails> {
                     margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
                     child: Html(data: "简介：${book.intro ?? ""}"),
                   ),
-
                 ],
               ),
               onRefresh: () => onRefresh(book),
@@ -147,16 +147,33 @@ class _PageState extends State<PageBookDetails> {
     );
   }
 
-  StreamSubscription? _lastRequest;
+  CancelToken? _cancelToken;
+
   Future<void> onRefresh(Book book) async {
-    _lastRequest?.cancel();
-    _lastRequest = Crawler.getInstance().getBookDetail(book).listen((event) {
+    _cancelToken?.cancel();
+    try {
+      var bk = await Crawler.getInstance()
+          .getBookDetail(book, _cancelToken = CancelToken());
+      await DbBook.saveBookDetails(bk);
       setState(() {
-        _bk = event;
+        _bk = bk;
       });
-    });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(days: 1),
+          content: Text(e.toString()),
+          action: SnackBarAction(
+            label: "ok",
+            onPressed: () {
+              // Code to execute.
+            },
+          ),
+        ),
+      );
+      log(e);
+    }
 
-   //var a =  await _lastRequest;
-
+    //var a =  await _lastRequest;
   }
 }

@@ -18,60 +18,46 @@ class ParserBiQuGe extends Parser {
   String get sourceName => "笔趣阁se";
 
   @override
-  Stream<List<SearchResult>> search(String key) {
-    StreamController<List<SearchResult>> controller = StreamController();
-    CancelToken cancelToken = CancelToken();
+  Future<List<SearchResult>> search(String key, CancelToken cancelToken) async {
+    var dio = await DioUtils.dio;
+    //set cookie
+    await dio.get("http://www.biquge.se", cancelToken: cancelToken);
+    var res = await dio.post("http://www.biquge.se/case.php",
+        data: FormData.fromMap({"key": key}),
+        queryParameters: {"m": "search"},
+        cancelToken: cancelToken);
 
-    controller.onCancel = () {
-      cancelToken.cancel();
-    };
-
-    DioUtils.dio.then((dio) {
-      return dio
-          .get("http://www.biquge.se", cancelToken: cancelToken)
-          .then((value) => dio);
-    }).then((dio) {
-      return dio.post("http://www.biquge.se/case.php",
-          data: FormData.fromMap({"key": key}),
-          queryParameters: {"m": "search"},
-          cancelToken: cancelToken);
-    }).then((res) {
-      return compute(parseSearchResult, {
-        "data": res.data,
-        "realUri": res.realUri,
-        "sourceDomain": sourceDomain,
-        "sourceName": sourceName,
-      });
-    }).then((value) {
-      controller.add(value);
-      controller.close();
+    return compute(parseSearchResult, {
+      "data": res.data,
+      "realUri": res.realUri,
+      "sourceDomain": sourceDomain,
+      "sourceName": sourceName,
     });
-    return controller.stream;
   }
 
   @override
-  Stream<Book> getBookDetail(Book book) {
-    StreamController<Book> controller = StreamController();
-    CancelToken cancelToken = CancelToken();
-    controller.onCancel = () {
-      cancelToken.cancel();
-    };
-    DioUtils.dio.then((dio) {
-      return dio.get(book.url!, cancelToken: cancelToken);
-    }).then((res) {
-      return compute(parseBookDetails, {
-        "data": res.data,
-        "realUri": res.realUri,
-        "sourceDomain": sourceDomain,
-        "sourceName": sourceName,
-      });
+  Future<Book> getBookDetail(Book book, CancelToken cancelToken) async {
+    var dio = await DioUtils.dio;
+    var res = await dio.get(book.url!, cancelToken: cancelToken);
+    return compute(parseBookDetails, {
+      "data": res.data,
+      "realUri": res.realUri,
+      "sourceDomain": sourceDomain,
+      "sourceName": sourceName,
     }).then((value) {
-      // log("book == value:${value}");
-      controller.add(value);
-      controller.close();
+      book.sourceName = value.sourceName;
+      book.title = value.title;
+      book.author = value.author;
+      book.intro = value.intro;
+      book.url = value.url;
+      book.cover = value.cover;
+      book.chapterList = value.chapterList;
+      for (var i = 0; i < (value.chapterList?.length ?? 0); i++) {
+        value.chapterList![i].index = i;
+        value.chapterList![i].bookId = book.id;
+      }
+      return book;
     });
-
-    return controller.stream;
   }
 }
 
