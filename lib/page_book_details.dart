@@ -94,43 +94,47 @@ class _PageState extends State<PageBookDetails> {
                         height: 180,
                         child: Image.network(book.cover ?? ""),
                       ),
-                      Container(
-                        margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
-                              child: Text(
-                                "${book.title}",
-                                style: TextStyle(fontSize: 24),
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                child: Expanded(
+                                  child: Text(
+                                    "${book.title}",
+                                    style: TextStyle(fontSize: 24),
+                                  ),
+                                ),
                               ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
-                              child: Text(
-                                "${book.author}",
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.black54),
+                              Container(
+                                margin: EdgeInsets.fromLTRB(0, 15, 0, 0),
+                                child: Text(
+                                  "${book.author}",
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.black54),
+                                ),
                               ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
-                              child: Text(
-                                "${book.sourceName}",
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.redAccent),
+                              Container(
+                                margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                child: Text(
+                                  "${book.sourceName}",
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.redAccent),
+                                ),
                               ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.fromLTRB(0, 10, 0, 0),
-                              child: Text(
-                                "最新章节",
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.redAccent),
+                              Container(
+                                margin: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                                child: Text(
+                                  "最新章节",
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.redAccent),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       )
                     ],
