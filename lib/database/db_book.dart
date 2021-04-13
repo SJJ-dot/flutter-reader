@@ -97,7 +97,7 @@ class DbBook {
       };
       var batch = txn.batch();
       batch.update("Book", bookValues, where: "id=?", whereArgs: [book.id]);
-      BdChapter.saveChapterList(book.chapterList ?? List.empty(), batch);
+      DbChapter.saveChapterList(book.chapterList ?? List.empty(), batch);
       await batch.commit(noResult: true);
     });
   }
@@ -128,17 +128,17 @@ class DbBook {
     var mapList = await db.rawQuery("select * from Book where id = ?", [id]);
     var map = mapList.first;
     return Book(
-      id: map["id"] as int,
-      sourceDomain: map["sourceDomain"] as String,
-      sourceName: map["sourceName"] as String,
-      title: map["title"] as String,
-      author: map["author"] as String,
-      url: map["url"] as String,
-      intro: map["intro"] as String?,
-      cover: map["cover"] as String?,
-      reading: map["reading"] as int == 1,
-      readingChapter: map["readingChapter"] as int,
-      readingPos: map["readingPos"] as int,
-    );
+        id: map["id"] as int,
+        sourceDomain: map["sourceDomain"] as String,
+        sourceName: map["sourceName"] as String,
+        title: map["title"] as String,
+        author: map["author"] as String,
+        url: map["url"] as String,
+        intro: map["intro"] as String?,
+        cover: map["cover"] as String?,
+        reading: map["reading"] as int == 1,
+        readingChapter: map["readingChapter"] as int,
+        readingPos: map["readingPos"] as int,
+        chapterList: await DbChapter.getChapterList(map["id"] as int));
   }
 }

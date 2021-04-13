@@ -84,8 +84,11 @@ Book parseBookDetails(Map<String, dynamic> map) {
       break;
     }
     var chapterA = chapterEl.querySelector("a");
-    var url = uri.resolve(chapterA?.attributes["href"] ?? "").toString();
-    chapterList.insert(0, Chapter(chapterA?.text ?? "empty", url));
+    var chapterName = chapterA?.text;
+    if (chapterName?.isNotEmpty == true) {
+      var url = uri.resolve(chapterA?.attributes["href"] ?? "").toString();
+      chapterList.insert(0, Chapter(chapterName ?? "empty", url));
+    }
   }
   book.chapterList = chapterList;
   return book;

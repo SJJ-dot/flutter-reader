@@ -53,9 +53,27 @@ class _PageState extends State<PageBookDetails> {
   }
 
   Widget buildPage(BuildContext context, Book book) {
+    var chapterList = book.chapterList ?? List.empty();
+
     return Scaffold(
       appBar: AppBar(
         title: Text("${book.title}"),
+      ),
+      // onEndDrawerChanged: (b) {
+      //   log("drawer b$b");
+      // },
+      endDrawer: Drawer(
+        child: ListView.builder(
+          itemCount: chapterList.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Card(
+              child: Container(
+                padding: EdgeInsets.all(10),
+                child: Text(chapterList[index].title),
+              ),
+            );
+          },
+        ),
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -74,7 +92,7 @@ class _PageState extends State<PageBookDetails> {
                       Container(
                         width: 140,
                         height: 180,
-                        child: Image.network(book.cover??""),
+                        child: Image.network(book.cover ?? ""),
                       ),
                       Container(
                         margin: EdgeInsets.fromLTRB(10, 0, 0, 0),

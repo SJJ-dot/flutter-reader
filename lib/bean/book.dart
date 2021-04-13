@@ -12,7 +12,9 @@ class Book {
       this.cover,
       this.reading = false,
       this.readingChapter = -1,
-      this.readingPos = -1});
+      this.readingPos = -1,
+      this.chapterList});
+
   ///数据库主键id
   int id;
   String? sourceDomain;
@@ -32,7 +34,6 @@ class Book {
 
   ///正在阅读的文字索引从-1开始
   int readingPos;
-
 
   ///
   List<Chapter>? chapterList;

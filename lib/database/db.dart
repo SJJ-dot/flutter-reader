@@ -15,7 +15,7 @@ class DB {
       version: 1,
       onCreate: (db, version) async {
        await DbBook.createTable(db, version);
-       await BdChapter.createTable(db, version);
+       await DbChapter.createTable(db, version);
       },
     );
   });
